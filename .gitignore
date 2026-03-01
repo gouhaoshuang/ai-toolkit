@@ -1,2 +1,7 @@
 output
 .claude/settings.local.json
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
