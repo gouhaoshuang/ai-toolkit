@@ -1,5 +1,6 @@
 {
   "enabledPlugins": {
-    "yuque-personal@yuque": true
+    "yuque-personal@yuque": true,
+    "document-skills@anthropic-agent-skills": true
   }
 }
