@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gemini 课程笔记"
+  short_description: "将长课程录音与代码、课件分段交给 Gemini，确认分段后生成并合并 Markdown 笔记"
+  default_prompt: "使用 $gemini-course-notes，根据我的课程录音和配套资料先提出分段方案，确认后生成并合并课程笔记。"
