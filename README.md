@@ -13,6 +13,7 @@
 | 技能 | 用途 |
 |---|---|
 | [aistudio2api](skill/aistudio2api/SKILL.md) | Gemini 网页代理的 Docker 部署、Mihomo 接入、Windows SSH 转发、账号登录、模型调用验证和维护 |
+| [image-to-editable-ppt](skill/image-to-editable-ppt/SKILL.md) | 将图片逐项重建为可编辑 PPT，保留文字、框图、箭头、公式与图表，并导出预览核对 |
 | [gemini-course-notes](skill/gemini-course-notes/SKILL.md) | 结合课程录音、代码与课件，确认分段后通过 Gemini 生成并合并 Markdown 课程笔记 |
 
 `skill/` 中的技能按 `<名称>/SKILL.md` 组织，可让 AI 编程助手直接读取对应入口；需要自动发现时，再按所用客户端的技能安装方式配置。真实服务配置、API 密钥与账号登录状态保留在部署目录，不存入本仓库。

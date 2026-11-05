@@ -1,0 +1,4 @@
+interface:
+  display_name: "图片转可编辑 PPT"
+  short_description: "按参考图片逐项还原文字、框图、箭头和图表，保留配色布局并导出可编辑 PPT"
+  default_prompt: "使用 $image-to-editable-ppt，将这些图片按原图布局、配色和文字内容重建为可编辑 PPT，并检查导出预览。"
