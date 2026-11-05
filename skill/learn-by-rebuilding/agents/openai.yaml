@@ -1,0 +1,4 @@
+interface:
+  display_name: "手写复现学习项目"
+  short_description: "基于参考项目规划学习路线，确认后逐篇编写由用户手动实现的简洁教程"
+  default_prompt: "请使用 $learn-by-rebuilding 阅读我提供的参考项目和学习项目，先推荐学习路线与 docs 结构，等我确认后再逐篇编写教程。"
