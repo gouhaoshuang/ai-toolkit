@@ -1,6 +1,15 @@
 # 本机实例记录
 
-核对日期：2026-10-27。以下是当日部署和测试结果，不代替使用时的状态检查。
+部署记录日期：2026-10-27；免 sudo 客户端更新：2026-11-12。下文部署参数保留当时记录；新的调用入口见下一节，历史测试不代替实时状态检查。
+
+## 直接调用（2026-11-12 更新）
+
+- 新 agent 优先运行技能内 `scripts/client.py`，不读取 root 所有的服务 `.env`，无需 sudo 或管理登录。
+- `ghs` 用户的代理 token 已单独保存在 `~/.config/aistudio2api/client.json`（目录0700、文件0600）；只含 `api_key`，无管理/Google 凭证。脚本自动读取，不输出 token。权限、轮换和完整调用见 [client-usage.md](client-usage.md)。
+- 源码技能位于 `/data/ghs/services/ai-toolkit/skill/aistudio2api`；DSH 安装副本位于 `/data/ghs/.dsh/skills/aistudio2api`，需要连同 scripts 与 references 一起同步。
+- 2026-11-12 已有一次 `gemini-4-argon` 普通长文生成成功：HTTP200、`finish_reason=stop`，输入两份本地参考笔记。
+- 同日通过安装副本的 `scripts/client.py`，以普通 `ghs` 用户、无需 sudo/密码完成 `/v1/models` 查询与 Argon 短生成：HTTP200，17×19 返回323，约3.91秒，`finish_reason=stop`。另完成7项客户端离线检查（私有配置、权限拒绝、缺失配置、文件附加、模型不替换、输出不覆盖、拒绝重定向）。未运行独立新 agent 的端到端测试。
+- 上述测试不代表 Argon 工具或流式已验证，也不以响应模型名独立认证上游身份。
 
 ## 位置与网络
 
@@ -29,7 +38,7 @@
 - `PROXY_API_KEY`：用于客户端访问生成 API，与管理密码独立。
 - `data/auth/`：Google 登录状态，由运行中的应用管理。
 
-当日已完成一个 Google 账号认证。这里不记录邮箱、密码、API Key 或 Cookie。权限不足时先检查文件所有者，必要时使用已获授权的管理员方式读取所需字段，不向输出暴露凭证值。
+当日已完成一个 Google 账号认证。这里不记录邮箱、密码、API Key 或 Cookie。普通生成使用上方用户私有客户端配置；仅服务维护才涉及原 `.env`，不因普通调用失败而索取 sudo 密码或扩大该文件权限。
 
 Windows 用户应在本地建立 SSH 转发；在服务器上直接访问接口不需要 SSH 转发。具体操作见 [deployment.md](deployment.md)。
 

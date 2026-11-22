@@ -175,6 +175,8 @@ def prepare(config_path, out):
             attachments.append({"path": relative, "mime": mime, "sha256": digest(content)})
         if attachments:
             prompt += "\n\n配套附件：" + "、".join(Path(item["path"]).name[21:] for item in attachments) + "。"
+            if any(item["mime"].startswith("image/") for item in attachments):
+                prompt += "如附带图片与内容相关，请在最对应的知识点处用 ![说明](文件名) 嵌入，每张最多插入一次，无关图片可省略。"
         prompt += "\n"
         prepared.append({"id": number, "title": part["title"], "lines": part["lines"],
                          "prompt": f"prompts/{number:02d}.md", "prompt_sha256": digest(prompt.encode()),
