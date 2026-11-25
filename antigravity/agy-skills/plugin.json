@@ -1,0 +1,14 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "skills",
+  "displayName": "Skills",
+  "version": "1.0.0",
+  "description": "Inspect active conversation skills, compaction and subagent loads, full skill discovery across scopes, and installed plugin descriptions with context token usage.",
+  "author": "tianyi",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "Open the Skills panel for this conversation",
+    "Show which skills are currently loaded in this session",
+    "Inspect installed plugins and their context token usage"
+  ]
+}

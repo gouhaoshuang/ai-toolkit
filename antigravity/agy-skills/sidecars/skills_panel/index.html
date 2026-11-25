@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skills</title>
+  <script src="/preload.js"></script>
+  <link rel="stylesheet" href="/styles.css?v=1.0.1" />
+</head>
+<body>
+  <div id="loading" class="loading" aria-busy="true">
+    <div class="skel-head">
+      <span class="skel" style="width:140px;height:26px;border-radius:7px"></span>
+      <span class="skel" style="width:96px;height:14px"></span>
+    </div>
+    <span class="skel" style="width:100%;height:76px;border-radius:10px"></span>
+    <div class="skel-list">
+      <span class="skel" style="width:100%;height:54px;border-radius:8px"></span>
+      <span class="skel" style="width:100%;height:54px;border-radius:8px"></span>
+      <span class="skel" style="width:100%;height:54px;border-radius:8px"></span>
+    </div>
+  </div>
+
+  <main id="panel" class="panel hidden">
+    <!-- Top Tabs & Session Meta -->
+    <header class="topbar">
+      <div class="tabs" role="tablist" aria-label="Panel views">
+        <button id="tab-skills" class="tab-btn on" type="button" role="tab" aria-selected="true" data-tab="skills">
+          <span>Skills</span>
+          <span id="badge-skills" class="tab-badge num">0 / 0</span>
+        </button>
+        <button id="tab-plugins" class="tab-btn" type="button" role="tab" aria-selected="false" data-tab="plugins">
+          <span>Plugins</span>
+          <span id="badge-plugins" class="tab-badge num">0</span>
+        </button>
+      </div>
+      <div id="session-meta" class="session-meta num" title=""></div>
+    </header>
+
+    <!-- ================= SKILLS TAB ================= -->
+    <section id="view-skills" class="tab-view">
+      <!-- Skill Token Summary Bar -->
+      <div class="summary-card">
+        <div class="summary-row">
+          <div class="summary-main">
+            <span id="sk-loaded-headline" class="headline num">当前已加载 0 个 Skill</span>
+            <span id="sk-compaction-pill" class="meta-chip hidden"></span>
+          </div>
+          <span id="sk-total-active-tok" class="tok-strong num">0 tok</span>
+        </div>
+
+        <div id="sk-token-bar" class="token-bar" role="img" aria-label="Skill context token distribution"></div>
+
+        <div class="legend-row num">
+          <span class="legend-item">
+            <span class="dot dot-loaded"></span>
+            <span>已加载正文</span>
+            <strong id="leg-loaded">0</strong>
+          </span>
+          <span class="legend-item">
+            <span class="dot dot-index"></span>
+            <span>索引常驻</span>
+            <strong id="leg-index">0</strong>
+          </span>
+          <span class="legend-item">
+            <span class="dot dot-deferred"></span>
+            <span>未加载延迟</span>
+            <strong id="leg-deferred">0</strong>
+          </span>
+        </div>
+      </div>
+
+      <!-- Section 1: Active / Session Activity -->
+      <section class="block">
+        <div class="block-head">
+          <h2 class="block-title">当前会话触发记录</h2>
+          <span id="active-count-label" class="block-sub num"></span>
+        </div>
+        <div id="active-skills-list" class="card-list"></div>
+      </section>
+
+      <!-- Section 2: All Discovered Skills -->
+      <section class="block">
+        <div class="block-head">
+          <h2 class="block-title">全部已发现 Skills</h2>
+          <span id="all-skills-count" class="block-sub num"></span>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <svg class="search-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.8"></circle>
+              <path d="M10.8 10.8L14 14"></path>
+            </svg>
+            <input id="skill-search" type="search" placeholder="搜索 skill 名称、简介或来源…" autocomplete="off" />
+          </div>
+          <div id="skill-filters" class="filter-pills" role="group" aria-label="Filter skills">
+            <button type="button" class="pill on" data-filter="all">全部</button>
+            <button type="button" class="pill" data-filter="loaded">已触发</button>
+            <button type="button" class="pill" data-filter="workspace">Workspace</button>
+            <button type="button" class="pill" data-filter="global">Global</button>
+            <button type="button" class="pill" data-filter="plugin">Plugin</button>
+            <button type="button" class="pill" data-filter="builtin">Builtin</button>
+          </div>
+        </div>
+
+        <div id="all-skills-list" class="card-list"></div>
+      </section>
+    </section>
+
+    <!-- ================= PLUGINS TAB ================= -->
+    <section id="view-plugins" class="tab-view hidden">
+      <div class="summary-card">
+        <div class="summary-row">
+          <div class="summary-main">
+            <span id="pl-headline" class="headline num">共 0 个已安装插件</span>
+          </div>
+          <span id="pl-active-tok" class="tok-strong num">0 tok 占用</span>
+        </div>
+        <div id="pl-subline" class="summary-sub num"></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="7" cy="7" r="4.8"></circle>
+            <path d="M10.8 10.8L14 14"></path>
+          </svg>
+          <input id="plugin-search" type="search" placeholder="搜索插件名、简介、作者或组件…" autocomplete="off" />
+        </div>
+        <div id="plugin-filters" class="filter-pills" role="group" aria-label="Filter plugins">
+          <button type="button" class="pill on" data-filter="all">全部</button>
+          <button type="button" class="pill" data-filter="enabled">已启用</button>
+          <button type="button" class="pill" data-filter="disabled">已禁用</button>
+          <button type="button" class="pill" data-filter="user">用户/工作区</button>
+          <button type="button" class="pill" data-filter="builtin">内置</button>
+        </div>
+      </div>
+
+      <div id="plugins-list" class="card-list"></div>
+    </section>
+  </main>
+
+  <script src="/app.js?v=1.0.1"></script>
+</body>
+</html>
