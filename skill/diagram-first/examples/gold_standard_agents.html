@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AndroidWorld 四类 Agent 架构草图 v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #F6F7F9;
+    font-family: "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px;
+    color: #0F172A;
+  }
+  .canvas-card {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    box-shadow: 0 2px 14px rgba(15, 23, 42, 0.045);
+    padding: 22px 24px 18px;
+    width: 1460px;
+    max-width: 100%;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>
+</head>
+<body>
+<div class="canvas-card">
+  <svg viewBox="0 0 1440 932" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+        <path d="M 1 1.5 L 8.5 5 L 1 8.5 z" fill="#64748B" />
+      </marker>
+      <marker id="arr-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+        <path d="M 1 1.5 L 8.5 5 L 1 8.5 z" fill="#BE123C" />
+      </marker>
+      <marker id="arr-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+        <path d="M 1 1.5 L 8.5 5 L 1 8.5 z" fill="#2563EB" />
+      </marker>
+      <marker id="arr-loop" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+        <path d="M 1 1.5 L 8.5 5 L 1 8.5 z" fill="#94A3B8" />
+      </marker>
+    </defs>
+
+    <!-- White Paper Canvas -->
+    <rect x="0" y="0" width="1440" height="932" fill="#FFFFFF" />
+
+    <!-- ==================== HEADER ==================== -->
+    <text x="20" y="32" font-size="22" font-weight="700" fill="#0F172A">AndroidWorld 四类 GUI Agent 单步运行结构</text>
+
+    <!-- Minimal Legend (top-right) -->
+    <g transform="translate(1036, 16)">
+      <rect x="0" y="0" width="15" height="15" rx="4" fill="#FFF1F2" stroke="#BE123C" stroke-width="1.5" />
+      <text x="22" y="12" font-size="12" fill="#334155">模型调用（核心）</text>
+
+      <rect x="136" y="0" width="15" height="15" rx="4" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4" />
+      <text x="158" y="12" font-size="12" fill="#334155">主要差异机制</text>
+
+      <rect x="252" y="0" width="15" height="15" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.4" />
+      <text x="274" y="12" font-size="12" fill="#334155">环境 / 通用步骤</text>
+    </g>
+
+    <!-- Shared USER TASK Anchor Bar -->
+    <g transform="translate(20, 48)">
+      <rect x="0" y="0" width="1400" height="32" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <rect x="6" y="5" width="96" height="22" rx="6" fill="#BE123C" />
+      <text x="54" y="20" font-size="11.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">共享示例任务</text>
+      <text x="116" y="20.5" font-size="12.5" fill="#1E293B" font-weight="600">在录音机中点击 Save 按钮</text>
+      <text x="288" y="20.5" font-size="12" fill="#64748B">1080×2400 屏幕   ·   同一按钮的三种表示：虚拟坐标 (500, 820)   ｜   物理像素 (540, 1968)   ｜   UI 元素索引 #12</text>
+    </g>
+
+    <!-- ==================== COLUMN GUIDES ==================== -->
+    <line x1="20" y1="94" x2="1420" y2="94" stroke="#E2E8F0" stroke-width="1" />
+    <g font-size="11.5" font-weight="600" fill="#94A3B8" text-anchor="middle">
+      <text x="24" y="114" text-anchor="start">AGENT 范式</text>
+      <text x="348" y="114">① 视觉输入与历史记忆（以第 7 步为例）</text>
+      <text x="614" y="114">② 模型决策</text>
+      <text x="807" y="114">③ 模型输出形态</text>
+      <text x="1010" y="114">④ 动作接地</text>
+      <text x="1154" y="114">⑤ 执行</text>
+      <text x="1320" y="114">⑥ 动作后反思</text>
+    </g>
+
+    <!-- ====================================================================== -->
+    <!-- LANE 1: Qwen3VL (y = 128 .. 310)                                       -->
+    <!-- ====================================================================== -->
+    <g transform="translate(0, 128)">
+      <line x1="20" y1="178" x2="1420" y2="178" stroke="#F1F5F9" stroke-width="1.5" />
+
+      <!-- Col 0: Identity -->
+      <rect x="20" y="26" width="4" height="76" rx="2" fill="#BE123C" opacity="0.85" />
+      <text x="34" y="52" font-size="17" font-weight="700" fill="#0F172A">Qwen3VL</text>
+      <text x="34" y="74" font-size="12.5" fill="#64748B">单图 + 结论文本</text>
+      <text x="34" y="95" font-size="11.5" font-weight="600" fill="#BE123C">单轮 · 1 次/步</text>
+
+      <!-- Col 1: Input & Memory (x=176, w=346, h=124) -->
+      <rect x="176" y="6" width="346" height="124" rx="14" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5" />
+      <text x="192" y="26" font-size="11" font-weight="700" fill="#1D4ED8">单轮输入：旧图全丢弃，仅送当前 1 张原图 + 过往结论</text>
+
+      <!-- Row A: Image track (× × × × [原图7]) -->
+      <text x="192" y="57" font-size="10.5" font-weight="600" fill="#64748B">截图轨</text>
+      <g transform="translate(238, 36)">
+        <rect x="0"   y="0" width="42" height="34" rx="5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.1" stroke-dasharray="3 2" />
+        <text x="21"  y="21" font-size="10.5" fill="#CBD5E1" text-anchor="middle">× 图3</text>
+
+        <rect x="49"  y="0" width="42" height="34" rx="5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.1" stroke-dasharray="3 2" />
+        <text x="70"  y="21" font-size="10.5" fill="#CBD5E1" text-anchor="middle">× 图4</text>
+
+        <rect x="98"  y="0" width="42" height="34" rx="5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.1" stroke-dasharray="3 2" />
+        <text x="119" y="21" font-size="10.5" fill="#CBD5E1" text-anchor="middle">× 图5</text>
+
+        <rect x="147" y="0" width="42" height="34" rx="5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.1" stroke-dasharray="3 2" />
+        <text x="168" y="21" font-size="10.5" fill="#CBD5E1" text-anchor="middle">× 图6</text>
+
+        <rect x="198" y="-2" width="70" height="38" rx="6" fill="#2563EB" stroke="#1D4ED8" stroke-width="1.4" />
+        <text x="233" y="21" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">当前原图7</text>
+      </g>
+
+      <!-- Row B: Text conclusion track -->
+      <text x="192" y="103" font-size="10.5" font-weight="600" fill="#64748B">文本轨</text>
+      <g transform="translate(238, 80)">
+        <rect x="0" y="0" width="268" height="38" rx="7" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2" />
+        <text x="10" y="16" font-size="10.5" fill="#334155">Step 1: 打开录音机   ·   Step 2: 开始录制</text>
+        <text x="10" y="31" font-size="10.5" fill="#64748B">...   Step 6: 点击停止，弹出保存确认框</text>
+      </g>
+
+      <!-- Arrow 1 -> 2 -->
+      <line x1="522" y1="68" x2="546" y2="68" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 2: Model Call (x=550, w=128, h=124) -->
+      <rect x="550" y="6" width="128" height="124" rx="14" fill="#FFF1F2" stroke="#BE123C" stroke-width="1.8" />
+      <text x="614" y="30" font-size="11" font-weight="700" fill="#BE123C" text-anchor="middle">VLM 推理 1×</text>
+      <text x="614" y="66" font-size="15" font-weight="700" fill="#0F172A" text-anchor="middle">单轮看图决策</text>
+      <text x="614" y="90" font-size="11" fill="#64748B" text-anchor="middle">同时自总结</text>
+      <text x="614" y="106" font-size="11" fill="#64748B" text-anchor="middle">本步结论</text>
+
+      <!-- Arrow 2 -> 3 -->
+      <line x1="678" y1="68" x2="700" y2="68" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 3: Model Output Format (x=704, w=206, h=124) -->
+      <rect x="704" y="6" width="206" height="124" rx="14" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="1.5" />
+      <text x="718" y="25" font-size="10.5" font-weight="700" fill="#BE123C">三段式 XML 输出</text>
+
+      <!-- Pill 1: Thinking -->
+      <rect x="716" y="33" width="182" height="24" rx="5" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <text x="725" y="49" font-size="10.5" fill="#64748B">① 思考：找到底部 Save 按钮</text>
+
+      <!-- Pill 2: Tool Call JSON (Action!) -->
+      <rect x="716" y="63" width="182" height="26" rx="5" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.2" />
+      <text x="725" y="80" font-size="10.5" font-weight="700" fill="#1D4ED8">② JSON：click (500, 820)</text>
+
+      <!-- Pill 3: Conclusion (Memory!) -->
+      <rect x="716" y="95" width="182" height="26" rx="5" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.2" />
+      <text x="725" y="112" font-size="10.5" font-weight="700" fill="#C2410C">③ 结论：已点击 Save → 存记忆</text>
+
+      <!-- Arrow 3 -> 4 (aligned with Pill 2) -->
+      <line x1="910" y1="76" x2="932" y2="76" stroke="#2563EB" stroke-width="1.7" marker-end="url(#arr-blue)" />
+
+      <!-- Col 4: Grounding (x=936, w=148, h=124) -->
+      <rect x="936" y="6" width="148" height="124" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.4" />
+      <text x="950" y="28" font-size="11" font-weight="700" fill="#475569">坐标直算</text>
+      <text x="1010" y="66" font-size="14.5" font-weight="700" fill="#0F172A" text-anchor="middle">÷1000 × 原图宽高</text>
+      <text x="1010" y="92" font-size="11.5" fill="#64748B" text-anchor="middle">→ 像素 (540, 1968)</text>
+
+      <!-- Arrow 4 -> 5 -->
+      <line x1="1084" y1="68" x2="1106" y2="68" stroke="#64748B" stroke-width="1.6" marker-end="url(#arr-gray)" />
+
+      <!-- Col 5: Execute (x=1110, w=88, h=124) -->
+      <rect x="1110" y="6" width="88" height="124" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.4" />
+      <text x="1154" y="62" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">执行点击</text>
+      <text x="1154" y="84" font-size="11" fill="#64748B" text-anchor="middle">获取新屏</text>
+
+      <!-- Col 6: Empty -->
+      <text x="1320" y="72" font-size="12" fill="#CBD5E1" text-anchor="middle">— 无二次调用 —</text>
+
+      <!-- Feedback Loop + branch from Conclusion pill -->
+      <path d="M 1154 130 L 1154 156 L 348 156 L 348 135" fill="none" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arr-loop)" />
+      <line x1="807" y1="130" x2="807" y2="156" stroke="#EA580C" stroke-width="1.4" stroke-dasharray="3 2" />
+      <circle cx="807" cy="156" r="3" fill="#EA580C" />
+      <rect x="498" y="145" width="286" height="22" rx="4" fill="#FFFFFF" />
+      <text x="641" y="160" font-size="11.5" fill="#64748B" text-anchor="middle">回环：将「③ 本步结论」写入文本轨，旧图丢弃</text>
+    </g>
+
+    <!-- ====================================================================== -->
+    <!-- LANE 2: GUIOwl15 (y = 318 .. 500)                                      -->
+    <!-- ====================================================================== -->
+    <g transform="translate(0, 318)">
+      <line x1="20" y1="178" x2="1420" y2="178" stroke="#F1F5F9" stroke-width="1.5" />
+
+      <!-- Col 0: Identity -->
+      <rect x="20" y="26" width="4" height="76" rx="2" fill="#BE123C" opacity="0.85" />
+      <text x="34" y="52" font-size="17" font-weight="700" fill="#0F172A">GUIOwl15</text>
+      <text x="34" y="74" font-size="12.5" fill="#64748B">近 5 图滑窗</text>
+      <text x="34" y="95" font-size="11.5" font-weight="600" fill="#BE123C">多轮 · 1 次/步</text>
+
+      <!-- Col 1: Concrete Step-7 Sliding Window (x=176, w=346, h=124) -->
+      <rect x="176" y="6" width="346" height="124" rx="14" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5" />
+      <text x="192" y="26" font-size="11" font-weight="700" fill="#1D4ED8">多轮滑窗：超出 5 步的旧图删掉，抽动作折成前序文本</text>
+
+      <!-- Left: Evicted steps 1~2 with concrete example -->
+      <g transform="translate(188, 36)">
+        <rect x="0" y="0" width="134" height="82" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2" stroke-dasharray="4 2" />
+        <text x="9" y="16" font-size="9.5" font-weight="700" fill="#C2410C">已滑出窗口（图已删）</text>
+        <line x1="8" y1="22" x2="126" y2="22" stroke="#F1F5F9" stroke-width="1" />
+        <text x="9" y="38" font-size="10.2" fill="#334155">Step 1: 打开录音机</text>
+        <text x="9" y="54" font-size="10.2" fill="#334155">Step 2: 点击开始录制</text>
+        <text x="9" y="72" font-size="9.5" fill="#94A3B8">仅留每步简短动作文本</text>
+      </g>
+
+      <text x="331" y="82" font-size="15" font-weight="700" fill="#64748B" text-anchor="middle">+</text>
+
+      <!-- Right: 5-frame sliding window (Step 3..7) -->
+      <g transform="translate(342, 36)">
+        <rect x="0" y="0" width="168" height="82" rx="8" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.4" />
+        <text x="84" y="16" font-size="9.5" font-weight="700" fill="#1D4ED8" text-anchor="middle">最近 5 步原图 + 对话</text>
+        <g transform="translate(7, 24)">
+          <rect x="0"   y="0" width="27" height="48" rx="4" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1" />
+          <text x="13.5" y="28" font-size="9.5" fill="#1E40AF" text-anchor="middle">图3</text>
+
+          <rect x="31"  y="0" width="27" height="48" rx="4" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1" />
+          <text x="44.5" y="28" font-size="9.5" fill="#1E40AF" text-anchor="middle">图4</text>
+
+          <rect x="62"  y="0" width="27" height="48" rx="4" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1" />
+          <text x="75.5" y="28" font-size="9.5" fill="#1E40AF" text-anchor="middle">图5</text>
+
+          <rect x="93"  y="0" width="27" height="48" rx="4" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1" />
+          <text x="106.5" y="28" font-size="9.5" fill="#1E40AF" text-anchor="middle">图6</text>
+
+          <rect x="124" y="0" width="30" height="48" rx="4" fill="#2563EB" stroke="#1D4ED8" stroke-width="1.2" />
+          <text x="139" y="28" font-size="9.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">图7</text>
+        </g>
+      </g>
+
+      <!-- Arrow 1 -> 2 -->
+      <line x1="522" y1="68" x2="546" y2="68" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 2: Model Call -->
+      <rect x="550" y="6" width="128" height="124" rx="14" fill="#FFF1F2" stroke="#BE123C" stroke-width="1.8" />
+      <text x="614" y="30" font-size="11" font-weight="700" fill="#BE123C" text-anchor="middle">VLM 推理 1×</text>
+      <text x="614" y="66" font-size="15" font-weight="700" fill="#0F172A" text-anchor="middle">看 5 帧演变</text>
+      <text x="614" y="90" font-size="11" fill="#64748B" text-anchor="middle">多轮上下文</text>
+      <text x="614" y="106" font-size="11" fill="#64748B" text-anchor="middle">直接做决策</text>
+
+      <!-- Arrow 2 -> 3 -->
+      <line x1="678" y1="68" x2="700" y2="68" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 3: Model Output Format -->
+      <rect x="704" y="6" width="206" height="124" rx="14" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="1.5" />
+      <text x="718" y="25" font-size="10.5" font-weight="700" fill="#BE123C">两段式：动作短句 + JSON</text>
+
+      <!-- Pill 1: Short Action text (extracted later on eviction!) -->
+      <rect x="716" y="36" width="182" height="36" rx="5" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.2" />
+      <text x="725" y="51" font-size="10.5" font-weight="700" fill="#C2410C">① 简短动作：点击 Save 按钮</text>
+      <text x="725" y="66" font-size="9.5" fill="#9A3412">日后滑出 5 图窗口时，就抽这行</text>
+
+      <!-- Pill 2: Tool Call JSON -->
+      <rect x="716" y="80" width="182" height="36" rx="5" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.2" />
+      <text x="725" y="96" font-size="10.5" font-weight="700" fill="#1D4ED8">② JSON：tap (500, 820)</text>
+      <text x="725" y="110" font-size="9.5" fill="#1E40AF">工具名需由 tap 映射为 click</text>
+
+      <!-- Arrow 3 -> 4 -->
+      <line x1="910" y1="98" x2="932" y2="98" stroke="#2563EB" stroke-width="1.7" marker-end="url(#arr-blue)" />
+
+      <!-- Col 4: Grounding -->
+      <rect x="936" y="6" width="148" height="124" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.4" />
+      <text x="950" y="28" font-size="11" font-weight="700" fill="#475569">坐标直算</text>
+      <text x="1010" y="66" font-size="14.5" font-weight="700" fill="#0F172A" text-anchor="middle">÷1000 × 原图宽高</text>
+      <text x="1010" y="92" font-size="11.5" fill="#64748B" text-anchor="middle">tap → click (540,1968)</text>
+
+      <!-- Arrow 4 -> 5 -->
+      <line x1="1084" y1="68" x2="1106" y2="68" stroke="#64748B" stroke-width="1.6" marker-end="url(#arr-gray)" />
+
+      <!-- Col 5: Execute -->
+      <rect x="1110" y="6" width="88" height="124" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.4" />
+      <text x="1154" y="62" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">执行点击</text>
+      <text x="1154" y="84" font-size="11" fill="#64748B" text-anchor="middle">获取新屏</text>
+
+      <!-- Col 6: Empty -->
+      <text x="1320" y="72" font-size="12" fill="#CBD5E1" text-anchor="middle">— 无二次调用 —</text>
+
+      <!-- Feedback Loop -->
+      <path d="M 1154 130 L 1154 156 L 348 156 L 348 135" fill="none" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arr-loop)" />
+      <rect x="488" y="145" width="384" height="22" rx="4" fill="#FFFFFF" />
+      <text x="680" y="160" font-size="11.5" fill="#64748B" text-anchor="middle">回环：新图入窗；图 3 滑出后删图，只把其「简短动作」追加进左侧文本</text>
+    </g>
+
+    <!-- ====================================================================== -->
+    <!-- LANE 3: UI_TARS (y = 508 .. 690)                                       -->
+    <!-- ====================================================================== -->
+    <g transform="translate(0, 508)">
+      <line x1="20" y1="178" x2="1420" y2="178" stroke="#F1F5F9" stroke-width="1.5" />
+
+      <!-- Col 0: Identity -->
+      <rect x="20" y="26" width="4" height="76" rx="2" fill="#BE123C" opacity="0.85" />
+      <text x="34" y="52" font-size="17" font-weight="700" fill="#0F172A">UI_TARS</text>
+      <text x="34" y="74" font-size="12.5" fill="#64748B">缩放图 + 全量文本</text>
+      <text x="34" y="95" font-size="11.5" font-weight="600" fill="#BE123C">多轮 · 1 次/步</text>
+
+      <!-- Col 1: Asymmetric Timeline + Resize Graphic (x=176, w=346, h=124) -->
+      <rect x="176" y="6" width="346" height="124" rx="14" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5" />
+      <text x="192" y="26" font-size="11" font-weight="700" fill="#1D4ED8">非对称多轮：先等比缩图（≤100万像素），助手思考全部保留</text>
+
+      <!-- Left: Resize visual (original -> 0.62x) -->
+      <g transform="translate(188, 38)">
+        <rect x="0" y="0" width="28" height="54" rx="4" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="3 2" />
+        <text x="14" y="30" font-size="8.5" fill="#64748B" text-anchor="middle">原图</text>
+
+        <text x="37" y="32" font-size="12" font-weight="700" fill="#2563EB" text-anchor="middle">→</text>
+
+        <rect x="46" y="14" width="24" height="40" rx="4" fill="#2563EB" />
+        <text x="58" y="37" font-size="8.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">缩图</text>
+
+        <text x="35" y="73" font-size="9.5" font-weight="600" fill="#1D4ED8" text-anchor="middle">等比 0.62×</text>
+      </g>
+
+      <!-- Divider -->
+      <line x1="270" y1="38" x2="270" y2="116" stroke="#BFDBFE" stroke-width="1.2" />
+
+      <!-- Right: 2-row asymmetric timeline (Images pruned vs Assistant ALL kept!) -->
+      <g transform="translate(279, 37)">
+        <!-- Row A: Scaled Images (only recent N kept) -->
+        <text x="0" y="20" font-size="10" font-weight="600" fill="#64748B">缩图轨</text>
+        <g transform="translate(40, 0)">
+          <rect x="0"   y="2" width="34" height="28" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.1" stroke-dasharray="3 2" />
+          <text x="17"  y="20" font-size="9.5" fill="#CBD5E1" text-anchor="middle">× 删</text>
+
+          <rect x="39"  y="2" width="34" height="28" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.1" stroke-dasharray="3 2" />
+          <text x="56"  y="20" font-size="9.5" fill="#CBD5E1" text-anchor="middle">× 删</text>
+
+          <rect x="78"  y="2" width="34" height="28" rx="4" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1.1" />
+          <text x="95"  y="20" font-size="9.5" fill="#1E40AF" text-anchor="middle">缩5</text>
+
+          <rect x="117" y="2" width="34" height="28" rx="4" fill="#DBEAFE" stroke="#60A5FA" stroke-width="1.1" />
+          <text x="134" y="20" font-size="9.5" fill="#1E40AF" text-anchor="middle">缩6</text>
+
+          <rect x="156" y="0" width="38" height="32" rx="4" fill="#2563EB" />
+          <text x="175" y="20" font-size="9.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">缩7</text>
+        </g>
+
+        <!-- Row B: Assistant Text (ALL kept!) -->
+        <text x="0" y="61" font-size="10" font-weight="700" fill="#1D4ED8">助手轨</text>
+        <g transform="translate(40, 42)">
+          <rect x="0"   y="2" width="34" height="28" rx="4" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.2" />
+          <text x="17"  y="20" font-size="9.5" fill="#1E3A8A" text-anchor="middle">文1..3</text>
+
+          <rect x="39"  y="2" width="34" height="28" rx="4" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.2" />
+          <text x="56"  y="20" font-size="9.5" fill="#1E3A8A" text-anchor="middle">文4</text>
+
+          <rect x="78"  y="2" width="34" height="28" rx="4" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.2" />
+          <text x="95"  y="20" font-size="9.5" fill="#1E3A8A" text-anchor="middle">文5</text>
+
+          <rect x="117" y="2" width="34" height="28" rx="4" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.2" />
+          <text x="134" y="20" font-size="9.5" fill="#1E3A8A" text-anchor="middle">文6</text>
+
+          <rect x="156" y="2" width="38" height="28" rx="4" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.3" />
+          <text x="175" y="20" font-size="9.5" font-weight="700" fill="#1D4ED8" text-anchor="middle">全保留</text>
+        </g>
+      </g>
+
+      <!-- Arrow 1 -> 2 -->
+      <line x1="522" y1="68" x2="546" y2="68" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 2: Model Call -->
+      <rect x="550" y="6" width="128" height="124" rx="14" fill="#FFF1F2" stroke="#BE123C" stroke-width="1.8" />
+      <text x="614" y="30" font-size="11" font-weight="700" fill="#BE123C" text-anchor="middle">VLM 推理 1×</text>
+      <text x="614" y="66" font-size="15" font-weight="700" fill="#0F172A" text-anchor="middle">缩放图推理</text>
+      <text x="614" y="90" font-size="11" fill="#64748B" text-anchor="middle">省视觉 Token</text>
+      <text x="614" y="106" font-size="11" fill="#64748B" text-anchor="middle">支持自动重试</text>
+
+      <!-- Arrow 2 -> 3 -->
+      <line x1="678" y1="68" x2="700" y2="68" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 3: Model Output Format -->
+      <rect x="704" y="6" width="206" height="124" rx="14" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="1.5" />
+      <text x="718" y="25" font-size="10.5" font-weight="700" fill="#BE123C">两段式：思考 + Python 调用</text>
+
+      <!-- Pill 1: Thought -->
+      <rect x="716" y="36" width="182" height="34" rx="5" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <text x="725" y="51" font-size="10.5" fill="#475569">① Thought：点击保存录音</text>
+      <text x="725" y="64" font-size="9.5" fill="#94A3B8">完整回复永久留在助手轨</text>
+
+      <!-- Pill 2: Python call -->
+      <rect x="716" y="78" width="182" height="38" rx="5" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.3" />
+      <text x="725" y="94" font-size="10.2" font-weight="700" fill="#1D4ED8">② click(start_box='(500,820)')</text>
+      <text x="725" y="109" font-size="9.5" fill="#1E40AF">非 JSON，需用 Python 语法树解析</text>
+
+      <!-- Arrow 3 -> 4 -->
+      <line x1="910" y1="97" x2="932" y2="97" stroke="#2563EB" stroke-width="1.7" marker-end="url(#arr-blue)" />
+
+      <!-- Col 4: Grounding (Blue highlight!) -->
+      <rect x="936" y="6" width="148" height="124" rx="14" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5" />
+      <text x="950" y="28" font-size="11" font-weight="700" fill="#1D4ED8">AST 解析 + 还原</text>
+      <text x="1010" y="64" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">归一化 × 原图宽高</text>
+      <text x="1010" y="88" font-size="11" fill="#1E40AF" text-anchor="middle">按缩放前 1080×2400</text>
+      <text x="1010" y="105" font-size="11" fill="#1E40AF" text-anchor="middle">反算防点击偏移</text>
+
+      <!-- Arrow 4 -> 5 -->
+      <line x1="1084" y1="68" x2="1106" y2="68" stroke="#64748B" stroke-width="1.6" marker-end="url(#arr-gray)" />
+
+      <!-- Col 5: Execute -->
+      <rect x="1110" y="6" width="88" height="124" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.4" />
+      <text x="1154" y="62" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">执行点击</text>
+      <text x="1154" y="84" font-size="11" fill="#64748B" text-anchor="middle">获取新屏</text>
+
+      <!-- Col 6: Empty -->
+      <text x="1320" y="72" font-size="12" fill="#CBD5E1" text-anchor="middle">— 无二次调用 —</text>
+
+      <!-- Feedback Loop -->
+      <path d="M 1154 130 L 1154 156 L 348 156 L 348 135" fill="none" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arr-loop)" />
+      <rect x="524" y="145" width="312" height="22" rx="4" fill="#FFFFFF" />
+      <text x="680" y="160" font-size="11.5" fill="#64748B" text-anchor="middle">回环：缩放新图入队（仅留近 N 张），助手回复全部保留</text>
+    </g>
+
+    <!-- ====================================================================== -->
+    <!-- LANE 4: M3A (y = 698 .. 912) — 2-CALL + UI TREE + REFLECTION!          -->
+    <!-- ====================================================================== -->
+    <g transform="translate(0, 698)">
+      <!-- Subtle highlight surface for paradigm shift -->
+      <rect x="12" y="0" width="1416" height="214" rx="16" fill="#FAFAFA" stroke="#E2E8F0" stroke-width="1.1" />
+
+      <!-- Col 0: Identity -->
+      <rect x="24" y="28" width="4" height="76" rx="2" fill="#BE123C" />
+      <text x="38" y="54" font-size="17" font-weight="700" fill="#0F172A">M3A</text>
+      <text x="38" y="76" font-size="12.5" fill="#64748B">UI 树 + 双阶段反思</text>
+      <rect x="38" y="88" width="90" height="21" rx="10.5" fill="#BE123C" />
+      <text x="83" y="102.5" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">2 次调用 / 步</text>
+
+      <!-- Col 1: Input & Memory (Raw + SoM + UI Tree + Prev Reflection) -->
+      <rect x="176" y="10" width="346" height="124" rx="14" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.6" />
+      <text x="192" y="30" font-size="11" font-weight="700" fill="#1D4ED8">无历史截图：当前双图（原图+编号框）+ UI 树 + 上步反思</text>
+
+      <g transform="translate(188, 40)">
+        <!-- Raw screen -->
+        <rect x="0" y="0" width="38" height="80" rx="5" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2" />
+        <text x="19" y="44" font-size="9.5" fill="#64748B" text-anchor="middle">原图</text>
+
+        <!-- SoM marked screen -->
+        <rect x="46" y="0" width="46" height="80" rx="5" fill="#FFFFFF" stroke="#16A34A" stroke-width="1.5" />
+        <text x="69" y="14" font-size="8.5" font-weight="700" fill="#15803D" text-anchor="middle">SoM 框</text>
+        <rect x="53" y="22" width="32" height="14" rx="2" fill="none" stroke="#16A34A" stroke-width="1.1" />
+        <text x="69" y="32" font-size="8" fill="#15803D" text-anchor="middle">[4]</text>
+        <rect x="53" y="46" width="32" height="18" rx="2" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.4" />
+        <text x="69" y="58" font-size="9" font-weight="700" fill="#15803D" text-anchor="middle">[12]</text>
+
+        <!-- UI Tree + Prev reflection card -->
+        <rect x="102" y="0" width="218" height="80" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2" />
+        <text x="112" y="18" font-size="10.2" fill="#475569">[4] Cancel（可点击）</text>
+        <text x="112" y="35" font-size="10.5" font-weight="700" fill="#15803D">[12] Save（可点击）</text>
+        <line x1="110" y1="45" x2="310" y2="45" stroke="#F1F5F9" stroke-width="1" />
+        <text x="112" y="61" font-size="9.8" font-weight="600" fill="#BE123C">上步反思摘要（纯文本）：</text>
+        <text x="112" y="74" font-size="9.8" fill="#64748B">“已停止录制，弹出保存确认框”</text>
+      </g>
+
+      <!-- Arrow 1 -> 2 -->
+      <line x1="522" y1="72" x2="546" y2="72" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 2: Model Call #1 -->
+      <rect x="550" y="10" width="128" height="124" rx="14" fill="#FFF1F2" stroke="#BE123C" stroke-width="1.8" />
+      <text x="614" y="34" font-size="11" font-weight="700" fill="#BE123C" text-anchor="middle">LLM 调用 #1</text>
+      <text x="614" y="68" font-size="15" font-weight="700" fill="#0F172A" text-anchor="middle">选元素编号</text>
+      <text x="614" y="92" font-size="11" fill="#64748B" text-anchor="middle">不预测像素</text>
+      <text x="614" y="108" font-size="11" fill="#64748B" text-anchor="middle">只选 UI 索引</text>
+
+      <!-- Arrow 2 -> 3 -->
+      <line x1="678" y1="72" x2="700" y2="72" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 3: Model Output Format (NO coordinates!) -->
+      <rect x="704" y="10" width="206" height="124" rx="14" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="1.5" />
+      <text x="718" y="29" font-size="10.5" font-weight="700" fill="#BE123C">两段式：理由 + 元素索引 JSON</text>
+
+      <!-- Pill 1: Reason -->
+      <rect x="716" y="40" width="182" height="32" rx="5" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <text x="725" y="60" font-size="10.5" fill="#475569">① Reason：需点 [12] 保存录音</text>
+
+      <!-- Pill 2: Index JSON (highlighted green-blue!) -->
+      <rect x="716" y="80" width="182" height="40" rx="5" fill="#ECFDF5" stroke="#16A34A" stroke-width="1.3" />
+      <text x="725" y="97" font-size="10.5" font-weight="700" fill="#15803D">② {"action":"click","index":12}</text>
+      <text x="725" y="112" font-size="9.5" font-weight="600" fill="#166534">关键差异：输出里完全没有坐标！</text>
+
+      <!-- Arrow 3 -> 4 -->
+      <line x1="910" y1="100" x2="932" y2="100" stroke="#2563EB" stroke-width="1.7" marker-end="url(#arr-blue)" />
+
+      <!-- Col 4: Grounding (UI Index lookup!) -->
+      <rect x="936" y="10" width="148" height="124" rx="14" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.6" />
+      <text x="950" y="32" font-size="11" font-weight="700" fill="#1D4ED8">UI 树查表接地</text>
+      <text x="1010" y="68" font-size="14.5" font-weight="700" fill="#0F172A" text-anchor="middle">索引 #12 → 中心</text>
+      <text x="1010" y="92" font-size="11" fill="#1E40AF" text-anchor="middle">直接读控件包围盒</text>
+      <text x="1010" y="108" font-size="11" fill="#1E40AF" text-anchor="middle">不靠模型视觉定位</text>
+
+      <!-- Arrow 4 -> 5 -->
+      <line x1="1084" y1="72" x2="1106" y2="72" stroke="#64748B" stroke-width="1.6" marker-end="url(#arr-gray)" />
+
+      <!-- Col 5: Execute -->
+      <rect x="1110" y="10" width="88" height="124" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.4" />
+      <text x="1154" y="64" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">执行点击</text>
+      <text x="1154" y="86" font-size="11" fill="#64748B" text-anchor="middle">重标新屏</text>
+
+      <!-- Arrow 5 -> 6 (SECOND MODEL CALL!) -->
+      <line x1="1198" y1="72" x2="1220" y2="72" stroke="#BE123C" stroke-width="1.8" marker-end="url(#arr-red)" />
+
+      <!-- Col 6: Model Call #2 (Before vs After visual comparison!) -->
+      <rect x="1224" y="10" width="192" height="124" rx="14" fill="#FFF1F2" stroke="#BE123C" stroke-width="1.8" />
+      <text x="1320" y="31" font-size="11" font-weight="700" fill="#BE123C" text-anchor="middle">LLM 调用 #2（动作后反思）</text>
+
+      <!-- Mini Before vs After Screens -->
+      <g transform="translate(1240, 41)">
+        <rect x="0" y="0" width="54" height="50" rx="5" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2" />
+        <text x="27" y="21" font-size="9.5" font-weight="700" fill="#475569" text-anchor="middle">操作前</text>
+        <text x="27" y="37" font-size="8.5" fill="#94A3B8" text-anchor="middle">SoM 屏</text>
+
+        <text x="80" y="29" font-size="12" font-weight="700" fill="#BE123C" text-anchor="middle">vs</text>
+
+        <rect x="106" y="0" width="54" height="50" rx="5" fill="#FFFFFF" stroke="#BE123C" stroke-width="1.3" />
+        <text x="133" y="21" font-size="9.5" font-weight="700" fill="#BE123C" text-anchor="middle">操作后</text>
+        <text x="133" y="37" font-size="8.5" fill="#BE123C" text-anchor="middle">新 SoM 屏</text>
+      </g>
+      <text x="1320" y="114" font-size="11" font-weight="600" fill="#0F172A" text-anchor="middle">对比验证 → 写 &lt;50字 摘要</text>
+
+      <!-- Feedback Loop from Col 6 all the way back to Col 1 -->
+      <path d="M 1320 134 L 1320 162 L 348 162 L 348 139" fill="none" stroke="#BE123C" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#arr-red)" />
+      <rect x="646" y="151" width="382" height="22" rx="4" fill="#FAFAFA" />
+      <text x="837" y="166" font-size="11.5" font-weight="600" fill="#BE123C" text-anchor="middle">回环：仅存 &lt;50 字动作反思摘要（跨步不留任何历史截图）</text>
+
+      <!-- Ultra-light 1-line footnote for T3A / SeeAct -->
+      <text x="24" y="198" font-size="11" fill="#64748B">
+        <tspan font-weight="700" fill="#475569">同族变体补充：</tspan>
+        T3A = 去掉截图的纯文本版 M3A（仍为 2 次调用 + UI 树索引）；   SeeAct = 2 次多模态调用（① 看原图定意图 → ② 做 A/B/C 选项接地，不做动作后反思）
+      </text>
+    </g>
+  </svg>
+</div>
+</body>
+</html>
